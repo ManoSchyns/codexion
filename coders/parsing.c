@@ -5,8 +5,8 @@
 // Si la valeur == 0 -> Considéré comme une erreur
 static int	ft_atoi(char *str, int *number)
 {
-	int	result;
-	int	i;
+	long	result;
+	int		i;
 
 	i = 0;
 	result = 0;
@@ -21,7 +21,7 @@ static int	ft_atoi(char *str, int *number)
 			return (0);
 		i ++;
 	}
-	*number = result;
+	*number = (int) result;
 	return (1);
 }
 
