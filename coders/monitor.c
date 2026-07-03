@@ -1,33 +1,41 @@
 #include "codexion.h"
 
-void *monitor(void *args)
+void	analyse_one_coder(t_monitor *datas)
 {
-	int i;
-	int number_done;
-	t_list_coder *list_coder;
-	t_coder coder;
-	long time_to_burn;
-
-	number_done = 0;
-	while(!*(list_coder->is_dead) && number_done < list_coder->number_of_coders)
+	set_safe_last_compile(datas);
+	if (get_time_ms() - datas->last_compile_start
+		>= datas->time_to_burn)
 	{
-		list_coder = (t_list_coder *)args;
-		time_to_burn = (long)list_coder->coders[0].args.time_to_burnout;
-		i = 0;
-		while (i < list_coder->number_of_coders && !*(list_coder->is_dead) && number_done < list_coder->number_of_coders)
+		set_safe_dead(datas);
+		datas->is_dead = 1;
+		print_safe_dead(datas);
+	}
+}
+
+void	*monitor(void *args)
+{
+	t_monitor	datas;
+
+	datas.list_coder = (t_list_coder *)args;
+	datas.is_dead = 0;
+	datas.count_done = 0;
+	datas.time_to_burn = (long)datas.list_coder->coders[0].args.time_to_burnout;
+	while (datas.is_dead == 0 && datas.count_done
+		< datas.list_coder->number_of_coders)
+	{
+		datas.i = 0;
+		while (datas.i < datas.list_coder->number_of_coders
+			&& datas.is_dead == 0)
 		{
-			coder = list_coder->coders[i];
-			if (!(coder.is_done) && coder.compilation_count >= coder.args.number_of_compiles_required)
+			datas.coder = &datas.list_coder->coders[datas.i];
+			get_safe_is_done(&datas);
+			if (!datas.is_done)
 			{
-				number_done += 1;
-				coder.is_done = 1;
+				analyse_one_coder(&datas);
 			}
-			else if (!(coder.is_done) && get_time_ms()- coder.last_compile_start >= time_to_burn)
-			{
-				printf("%ld %d burned out", get_time_ms() - coder.start_time, coder.rank);
-				*(list_coder->is_dead) = 1;
-			}
-			i ++;
+			else
+				datas.count_done ++;
+			datas.i ++;
 		}
 	}
 	return (NULL);
