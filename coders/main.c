@@ -22,6 +22,7 @@ int	main(int argc, char **argv)
 	}
 	if (!set_dongles(list_coder))
 	{
+		free_all(list_coder);
 		printf("%s\n", "Erreur lors de l'allocation de memoire");
 		return (1);
 	}

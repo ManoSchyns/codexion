@@ -26,10 +26,21 @@ typedef struct s_args
 
 }	t_args;
 
+typedef struct s_heap t_heap;
+//
+typedef struct s_heap
+{
+	int		rank;
+	long	deadline;
+	t_heap	*next;
+}	t_heap;
+
 // A Dongle
 typedef struct s_dongle
 {
 	int				available;
+	long			last_release;
+	t_heap			*waiting_list;
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
 }	t_dongle;
@@ -107,5 +118,9 @@ void			set_safe_dead(t_monitor *datas);
 void			set_safe_last_compile(t_monitor *datas);
 void			print_safe_dead(t_monitor *datas);
 void			get_safe_is_done(t_monitor *datas);
+
+//scheduler
+void			scheduler(t_coder *coder, t_dongle *dongle);
+void			pop(t_heap **heap);
 
 #endif

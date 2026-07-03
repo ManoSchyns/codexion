@@ -1,5 +1,17 @@
 #include "codexion.h"
 
+void broadcast_all(t_list_coder *list_coders)
+{
+	int i;
+
+	i = 0;
+	while (i < list_coders->number_of_coders)
+	{
+		pthread_cond_broadcast(&list_coders->coders[i].right->cond);
+		i++;
+	}
+}
+
 void	analyse_one_coder(t_monitor *datas)
 {
 	set_safe_last_compile(datas);
@@ -8,6 +20,7 @@ void	analyse_one_coder(t_monitor *datas)
 	{
 		set_safe_dead(datas);
 		datas->is_dead = 1;
+		broadcast_all(datas->list_coder);
 		print_safe_dead(datas);
 	}
 }

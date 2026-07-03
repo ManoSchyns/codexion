@@ -34,9 +34,12 @@ int	set_dongles(t_list_coder *list_coder)
 		if (dongle == NULL)
 			return (0);
 		dongle->available = 1;
+		dongle->last_release = 0;
+		dongle->waiting_list = NULL;
 		pthread_mutex_init(&dongle->mutex, NULL);
 		pthread_cond_init(&dongle->cond, NULL);
 		list_coder->coders[i].right = dongle;
+		dongle = NULL;
 		i ++;
 	}
 	set_left_rigth(list_coder);

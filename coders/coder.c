@@ -1,10 +1,13 @@
 #include "codexion.h"
 
-/*toDO
-void	taking_dongle()
+void	show_message(t_coder *coder, char *message)
 {
-	
-}*/
+	pthread_mutex_lock(coder->mutex_printf);
+	printf("%ld %d %s\n", get_time_ms()
+		- coder->start_time, coder->rank, message);
+	pthread_mutex_unlock(coder->mutex_printf);
+}
+
 int	check_is_dead(t_coder *coder)
 {
 	int	is_dead;
@@ -18,12 +21,53 @@ int	check_is_dead(t_coder *coder)
 	return (0);
 }
 
-void	show_message(t_coder *coder, char *message)
+// Return 1 si le dongle est prenable
+// Return 0 si non
+int		dongle_is_available(t_coder *coder, t_dongle *dongle)
 {
-	pthread_mutex_lock(coder->mutex_printf);
-	printf("%ld %d %s\n", get_time_ms()
-		- coder->start_time, coder->rank, message);
-	pthread_mutex_unlock(coder->mutex_printf);
+	long	now;
+	long	dongle_cooldown;
+
+	now = get_time_ms();
+	dongle_cooldown = coder->args.dongle_cooldown;
+	scheduler(coder, dongle);
+	if (dongle->available && now - dongle->last_release >= dongle_cooldown
+		&& dongle->waiting_list->rank == coder->rank)
+		return (1);
+	return (0);
+}
+
+void	taking_dongle(t_coder *coder, t_dongle *dongle)
+{
+	dongle->available = 0;
+	show_message(coder, "has taken a dongle");
+	pop(&dongle->waiting_list);
+}
+
+void waiting_dongle(t_coder *coder, t_dongle *dongle)
+{
+	pthread_mutex_lock(&dongle->mutex);
+
+	while (!dongle_is_available(coder, dongle) && !check_is_dead(coder))
+		pthread_cond_wait(&dongle->cond, &dongle->mutex);
+
+	if (!check_is_dead(coder))
+		taking_dongle(coder, dongle);
+
+	pthread_mutex_unlock(&dongle->mutex);
+}
+
+void set_dongle_available(t_coder *coder)
+{
+	long	time;
+
+	time = get_time_ms();
+	coder->right->available = 1;
+	coder->right->last_release = time;
+	coder->left->available = 1;
+	coder->right->last_release = time;
+	pthread_cond_broadcast(&coder->right->cond);
+	pthread_cond_broadcast(&coder->left->cond);
 }
 
 // Return 1 si la routine s'est bien passéé
@@ -37,6 +81,7 @@ int	routine(t_coder *coder, int *compilation_count)
 		return (0);
 	show_message(coder, "is compiling");
 	usleep(coder->args.time_to_compile * 1000);
+	set_dongle_available(coder);
 	*compilation_count += 1;
 	if (check_is_dead(coder))
 		return (0);
@@ -74,6 +119,8 @@ void	*coder(void *args)
 		//si 2 dongle -> Start compiling
 		// compile
 		// Quand on commence a compiler on met le dernier temps de compilation effectué
+		waiting_dongle(coder, coder->right);
+		waiting_dongle(coder, coder->left);
 		if (!routine(coder, &compilation_count))
 			return (NULL);
 
