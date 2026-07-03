@@ -25,7 +25,6 @@ int	main(int argc, char **argv)
 		printf("%s\n", "Erreur lors de l'allocation de memoire");
 		return (1);
 	}
-
 	start_threads(list_coder);
 	join_threads(list_coder);
 	

@@ -1,8 +1,8 @@
 #include "codexion.h"
 
-void free_all(t_list_coder *list_coder)
+void	free_all(t_list_coder *list_coder)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (i < list_coder->number_of_coders)
@@ -19,31 +19,31 @@ void free_all(t_list_coder *list_coder)
 	free(list_coder);
 }
 
-long get_time_ms(void)
+long	get_time_ms(void)
 {
-	struct timeval tv;
+	struct timeval	tv;
 
 	gettimeofday(&tv, NULL);
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
-void start_threads(t_list_coder *list_coder)
+void	start_threads(t_list_coder *list_coder)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	pthread_create(&list_coder->monitor, NULL, monitor, list_coder);
 	while (i < list_coder->number_of_coders)
 	{
 		pthread_create(&list_coder->coders[i].thread, NULL,
-                           coder, &list_coder->coders[i]);
+			coder, &list_coder->coders[i]);
 		i ++;
 	}
 }
 
-void join_threads(t_list_coder *list_coder)
+void	join_threads(t_list_coder *list_coder)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	pthread_join(list_coder->monitor, NULL);

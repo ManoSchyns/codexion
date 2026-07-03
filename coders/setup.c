@@ -1,11 +1,11 @@
 #include "codexion.h"
 
 // Set les dongles a gauche et a droite
-void set_left_rigth(t_list_coder *list_coder)
+void	set_left_rigth(t_list_coder *list_coder)
 {
-	int i;
-	int left;
-	int number_code;
+	int	i;
+	int	left;
+	int	number_code;
 
 	i = 0;
 	left = 0;
@@ -21,9 +21,9 @@ void set_left_rigth(t_list_coder *list_coder)
 // Set les dongles
 // return 0 en cas d'erreur de malloc
 // retrun 1 si non
-int set_dongles(t_list_coder *list_coder)
+int	set_dongles(t_list_coder *list_coder)
 {
-	int i;
+	int			i;
 	t_dongle	*dongle;
 
 	i = 0;
@@ -43,20 +43,34 @@ int set_dongles(t_list_coder *list_coder)
 	return (1);
 }
 
-t_list_coder *get_coders(t_args args, int *is_dead, pthread_mutex_t *mutex_printf)
+void	set_datas(t_list_coder *list_coder, t_setup *datas, int *is_dead)
 {
-	int i;
-	t_list_coder *list_coder;
-	long	start_time;
+	list_coder->coders[datas->i].rank = datas->i + 1;
+	list_coder->coders[datas->i].args = datas->args;
+	list_coder->coders[datas->i].last_compile_start = datas->start_time;
+	list_coder->coders[datas->i].start_time = datas->start_time;
+	list_coder->coders[datas->i].is_dead = is_dead;
+	list_coder->coders[datas->i].is_done = 0;
+	list_coder->coders[datas->i].mutex_printf = datas->mutex_printf;
+	pthread_mutex_init(&list_coder->coders[datas->i].mutex_is_dead, NULL);
+	pthread_mutex_init(&list_coder->coders[datas->i].mutex_is_done, NULL);
+	pthread_mutex_init(&list_coder->coders[datas->i].mutex_last_compile_start,
+		NULL);
+}
 
-	i = 0;
-	start_time = get_time_ms();
-	list_coder = NULL;
+t_list_coder	*get_coders(t_args args,
+	int *is_dead, pthread_mutex_t *mutex_printf)
+{
+	t_setup			data;
+	t_list_coder	*list_coder;
+
+	data.i = 0;
+	data.start_time = get_time_ms();
+	data.args = args;
+	data.mutex_printf = mutex_printf;
 	list_coder = malloc(sizeof(t_list_coder));
-
 	if (list_coder == NULL)
 		return (NULL);
-
 	list_coder->number_of_coders = args.number_of_coders;
 	list_coder->coders = malloc(sizeof(t_coder) * (args.number_of_coders));
 	if (list_coder->coders == NULL)
@@ -64,22 +78,12 @@ t_list_coder *get_coders(t_args args, int *is_dead, pthread_mutex_t *mutex_print
 		free(list_coder);
 		return (NULL);
 	}
-
-	while(i < list_coder->number_of_coders)
+	while (data.i < list_coder->number_of_coders)
 	{
-		list_coder->coders[i].rank = i + 1;
-		list_coder->coders[i].args = args;
-		list_coder->coders[i].last_compile_start = start_time;
-		list_coder->coders[i].start_time = start_time;
-		list_coder->coders[i].is_dead = is_dead;
-		list_coder->coders[i].is_done = 0;
-		list_coder->coders[i].mutex_printf = mutex_printf;
-		pthread_mutex_init(&list_coder->coders[i].mutex_is_dead, NULL);
-		pthread_mutex_init(&list_coder->coders[i].mutex_is_done, NULL);
-		pthread_mutex_init(&list_coder->coders[i].mutex_last_compile_start, NULL);
-		i ++;
+		set_datas(list_coder, &data, is_dead);
+		data.i ++;
 	}
 	list_coder->is_dead = is_dead;
-	list_coder->start_time = start_time;
-	return list_coder;
+	list_coder->start_time = data.start_time;
+	return (list_coder);
 }
