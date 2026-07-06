@@ -23,44 +23,15 @@ Et Si
 temps mtnt - temps last use > temps de recharge
 */
 
-void	push_back(t_coder *coder, t_heap **heap)
+void print_hep(t_heap *heap)
 {
-	t_heap	*to_add;
-	t_heap	*work;
-
-	work = *heap;
-	to_add = malloc(sizeof(t_heap));
-	if (to_add == NULL)
-		return ;
-	to_add->next = NULL;
-	to_add->rank = coder->rank;
-	if (*heap == NULL)
+	printf("========= MA HEAP ==========\n");
+	while (heap != NULL)
 	{
-		*heap = to_add;
-		return ;
+		printf("%d\n", heap->rank);
+		heap = heap->next;
 	}
-	while (work->next != NULL)
-		work = work->next;
-	work->next = to_add;
-}
-
-void	pop(t_heap **heap)
-{
-	t_heap *to_remove;
-
-	to_remove = *heap;
-	*heap = (*heap)->next;
-	free(to_remove);
-}
-
-void	fifo(t_coder *coder, t_dongle *dongle)
-{
-	push_back(coder, &dongle->waiting_list);
-}
-
-void	edf()
-{
-
+	printf("\n========= End ==========\n");
 }
 
 // Return 1 si coder déjà dans waiting list
@@ -76,14 +47,36 @@ int	is_in_waitinglist(t_coder *coder, t_heap *waiting_list)
 	return (0);
 }
 
+void	pop(t_heap **heap)
+{
+	t_heap *to_remove;
+
+	if (*heap == NULL)
+		return ;
+	to_remove = *heap;
+	*heap = (*heap)->next;
+	free(to_remove);
+}
+
+void	edf()
+{
+
+}
+
 // Ajoute a la file d'attente du dongle
 // si il est pas déjà dessus
 void	scheduler(t_coder *coder, t_dongle *dongle)
 {	
-	if (is_in_waitinglist(coder, dongle->waiting_list))
-		return ;
 	if (strcmp(coder->args.scheduler,"fifo") == 0)
-		fifo(coder, dongle);
+		ft_fifo(coder, dongle);
 	else if (strcmp(coder->args.scheduler,"edf") == 0)
-		edf(coder, dongle);
+	{
+		pthread_mutex_lock(&coder->right->mutex);
+		edf(coder, coder->right);
+		pthread_mutex_unlock(&coder->right->mutex);	
+		pthread_mutex_lock(&coder->left->mutex);
+		edf(coder, coder->left);
+		pthread_mutex_unlock(&coder->left->mutex);
+	}
+	//print_hep(dongle->waiting_list);
 }

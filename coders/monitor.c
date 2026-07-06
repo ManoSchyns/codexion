@@ -7,7 +7,9 @@ void broadcast_all(t_list_coder *list_coders)
 	i = 0;
 	while (i < list_coders->number_of_coders)
 	{
+		pthread_mutex_lock(&list_coders->coders[i].right->mutex);
 		pthread_cond_broadcast(&list_coders->coders[i].right->cond);
+		pthread_mutex_unlock(&list_coders->coders[i].right->mutex);
 		i++;
 	}
 }
@@ -37,12 +39,13 @@ void	*monitor(void *args)
 		< datas.list_coder->number_of_coders)
 	{
 		datas.i = 0;
+		datas.count_done = 0;
 		while (datas.i < datas.list_coder->number_of_coders
 			&& datas.is_dead == 0)
 		{
 			datas.coder = &datas.list_coder->coders[datas.i];
 			get_safe_is_done(&datas);
-			if (!datas.is_done)
+			if (datas.is_done == 0)
 			{
 				analyse_one_coder(&datas);
 			}

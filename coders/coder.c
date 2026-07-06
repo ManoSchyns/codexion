@@ -1,5 +1,23 @@
 #include "codexion.h"
 
+struct timespec get_timeout_ms(long delay_ms)
+{
+    struct timeval tv;
+    struct timespec ts;
+
+    gettimeofday(&tv, NULL);
+    ts.tv_sec = tv.tv_sec;
+    ts.tv_nsec = tv.tv_usec * 1000;
+    ts.tv_nsec += delay_ms * 1000000;
+    if (ts.tv_nsec >= 1000000000)
+    {
+        ts.tv_sec += ts.tv_nsec / 1000000000;
+        ts.tv_nsec %= 1000000000;
+    }
+
+    return ts;
+}
+
 void	show_message(t_coder *coder, char *message)
 {
 	pthread_mutex_lock(coder->mutex_printf);
@@ -30,7 +48,8 @@ int		dongle_is_available(t_coder *coder, t_dongle *dongle)
 
 	now = get_time_ms();
 	dongle_cooldown = coder->args.dongle_cooldown;
-	scheduler(coder, dongle);
+	if (dongle->waiting_list == NULL)
+		return (0);
 	if (dongle->available && now - dongle->last_release >= dongle_cooldown
 		&& dongle->waiting_list->rank == coder->rank)
 		return (1);
@@ -40,16 +59,24 @@ int		dongle_is_available(t_coder *coder, t_dongle *dongle)
 void	taking_dongle(t_coder *coder, t_dongle *dongle)
 {
 	dongle->available = 0;
-	show_message(coder, "has taken a dongle");
 	pop(&dongle->waiting_list);
 }
 
 void waiting_dongle(t_coder *coder, t_dongle *dongle)
 {
-	pthread_mutex_lock(&dongle->mutex);
+	struct timespec ts;
+	long		delay;
 
+	pthread_mutex_lock(&dongle->mutex);
+	scheduler(coder, dongle);
 	while (!dongle_is_available(coder, dongle) && !check_is_dead(coder))
-		pthread_cond_wait(&dongle->cond, &dongle->mutex);
+	{
+		delay = dongle->last_release + coder->args.dongle_cooldown - get_time_ms();
+		if (delay < 0)
+			delay = 0;
+		ts = get_timeout_ms(delay);
+		pthread_cond_timedwait(&dongle->cond, &dongle->mutex, &ts);
+	}
 
 	if (!check_is_dead(coder))
 		taking_dongle(coder, dongle);
@@ -62,23 +89,27 @@ void set_dongle_available(t_coder *coder)
 	long	time;
 
 	time = get_time_ms();
+	pthread_mutex_lock(&coder->right->mutex);
 	coder->right->available = 1;
 	coder->right->last_release = time;
-	coder->left->available = 1;
-	coder->right->last_release = time;
 	pthread_cond_broadcast(&coder->right->cond);
+	pthread_mutex_unlock(&coder->right->mutex);
+	pthread_mutex_lock(&coder->left->mutex);
+	coder->left->available = 1;
+	coder->left->last_release = time;
 	pthread_cond_broadcast(&coder->left->cond);
+	pthread_mutex_unlock(&coder->left->mutex);
 }
 
 // Return 1 si la routine s'est bien passéé
 // 0 si non
 int	routine(t_coder *coder, int *compilation_count)
 {
+	if (check_is_dead(coder))
+		return (0);
 	pthread_mutex_lock(&coder->mutex_last_compile_start);
 	coder->last_compile_start = get_time_ms();
 	pthread_mutex_unlock(&coder->mutex_last_compile_start);
-	if (check_is_dead(coder))
-		return (0);
 	show_message(coder, "is compiling");
 	usleep(coder->args.time_to_compile * 1000);
 	set_dongle_available(coder);
@@ -119,8 +150,23 @@ void	*coder(void *args)
 		//si 2 dongle -> Start compiling
 		// compile
 		// Quand on commence a compiler on met le dernier temps de compilation effectué
-		waiting_dongle(coder, coder->right);
-		waiting_dongle(coder, coder->left);
+
+		coder->start_waiting = get_time_ms();
+		if (coder->rank == 1 || coder->args.number_of_coders == coder->rank)
+		{
+			waiting_dongle(coder, coder->left);
+			waiting_dongle(coder, coder->right);
+		}
+		else
+		{
+			waiting_dongle(coder, coder->right);
+			waiting_dongle(coder, coder->left);
+		}
+		if (!*coder->is_dead)
+		{
+			show_message(coder, "has taken a dongle");
+			show_message(coder, "has taken a dongle");
+		}
 		if (!routine(coder, &compilation_count))
 			return (NULL);
 

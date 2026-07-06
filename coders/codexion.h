@@ -31,6 +31,7 @@ typedef struct s_heap t_heap;
 typedef struct s_heap
 {
 	int		rank;
+	long	start_waiting;
 	long	deadline;
 	t_heap	*next;
 }	t_heap;
@@ -52,6 +53,7 @@ typedef struct s_coder
 	int				rank;
 	long			last_compile_start;
 	long			start_time;
+	long			start_waiting;
 	int				*is_dead;
 	int				is_done;
 	pthread_mutex_t	mutex_is_dead;
@@ -122,5 +124,8 @@ void			get_safe_is_done(t_monitor *datas);
 //scheduler
 void			scheduler(t_coder *coder, t_dongle *dongle);
 void			pop(t_heap **heap);
+int				is_in_waitinglist(t_coder *coder, t_heap *waiting_list);
+void			ft_fifo(t_coder *coder, t_dongle *dongle);
+void			push_back(t_coder *coder, t_heap **heap);
 
 #endif
