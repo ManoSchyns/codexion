@@ -28,7 +28,6 @@ void	free_all(t_list_coder *list_coder)
 	{
 		pthread_cond_destroy(&list_coder->coders[i].right->cond);
 		pthread_mutex_destroy(&list_coder->coders[i].right->mutex);
-		pthread_mutex_destroy(&list_coder->coders[i].mutex_is_dead);
 		pthread_mutex_destroy(&list_coder->coders[i].mutex_is_done);
 		pthread_mutex_destroy(&list_coder->coders[i].mutex_last_compile_start);
 		free_waiting_list(&list_coder->coders[i].right->waiting_list);
@@ -39,6 +38,7 @@ void	free_all(t_list_coder *list_coder)
 	free(list_coder);
 }
 
+// Recupere le temps actuel en ms
 long	get_time_ms(void)
 {
 	struct timeval	tv;

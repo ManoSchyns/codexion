@@ -33,9 +33,9 @@ int	check_is_dead(t_coder *coder)
 	int	is_dead;
 
 	is_dead = 0;
-	pthread_mutex_lock(&coder->mutex_is_dead);
+	pthread_mutex_lock(coder->mutex_is_dead);
 	is_dead = *(coder->is_dead);
-	pthread_mutex_unlock(&coder->mutex_is_dead);
+	pthread_mutex_unlock(coder->mutex_is_dead);
 	if (is_dead)
 		return (1);
 	return (0);

@@ -46,6 +46,7 @@ int	is_in_waitinglist(t_coder *coder, t_heap *waiting_list)
 	return (0);
 }
 
+// Retire le premier element de la heap
 void	pop(t_heap **heap)
 {
 	t_heap	*to_remove;

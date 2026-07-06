@@ -1,5 +1,7 @@
 #include "codexion.h"
 
+// Broadcast toutes les conditions
+// Un etat a changé
 void	broadcast_all(t_list_coder *list_coders)
 {
 	int	i;
@@ -14,6 +16,7 @@ void	broadcast_all(t_list_coder *list_coders)
 	}
 }
 
+// Verifie le temps pour un coder
 void	analyse_one_coder(t_monitor *datas)
 {
 	set_safe_last_compile(datas);
@@ -27,6 +30,7 @@ void	analyse_one_coder(t_monitor *datas)
 	}
 }
 
+// Partie de la fonction monitor
 void	monitor_utils(t_monitor *datas)
 {
 	datas->coder = &datas->list_coder->coders[datas->i];
@@ -39,6 +43,9 @@ void	monitor_utils(t_monitor *datas)
 		datas->count_done ++;
 }
 
+// Thread monitor
+// Analyse les codeurs
+// Verifie que le time to burnout n'est pas dépassé
 void	*monitor(void *args)
 {
 	t_monitor	datas;

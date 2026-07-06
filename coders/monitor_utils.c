@@ -2,9 +2,9 @@
 
 void	set_safe_dead(t_monitor *datas)
 {
-	pthread_mutex_lock(&datas->coder->mutex_is_dead);
+	pthread_mutex_lock(datas->coder->mutex_is_dead);
 	*(datas->list_coder->is_dead) = 1;
-	pthread_mutex_unlock(&datas->coder->mutex_is_dead);
+	pthread_mutex_unlock(datas->coder->mutex_is_dead);
 }
 
 void	set_safe_last_compile(t_monitor *datas)

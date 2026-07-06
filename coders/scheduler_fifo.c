@@ -1,5 +1,6 @@
 #include "codexion.h"
 
+// Logique fifo
 void	ft_fifo(t_coder *coder, t_dongle *dongle)
 {
 	if (is_in_waitinglist(coder, dongle->waiting_list))
@@ -8,6 +9,8 @@ void	ft_fifo(t_coder *coder, t_dongle *dongle)
 	pthread_cond_broadcast(&dongle->cond);
 }
 
+// Push dans la heap le coder
+// En fonction de son temps d'attente
 void	push_back(t_coder *coder, t_heap **heap)
 {
 	t_heap	*to_add;

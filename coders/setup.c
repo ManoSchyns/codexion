@@ -46,7 +46,8 @@ int	set_dongles(t_list_coder *list_coder)
 	return (1);
 }
 
-void	set_datas(t_list_coder *list_coder, t_setup *datas, int *is_dead)
+void	set_datas(t_list_coder *list_coder, t_setup *datas, int *is_dead,
+					pthread_mutex_t *mutex_is_dead)
 {
 	list_coder->coders[datas->i].rank = datas->i + 1;
 	list_coder->coders[datas->i].args = datas->args;
@@ -55,14 +56,15 @@ void	set_datas(t_list_coder *list_coder, t_setup *datas, int *is_dead)
 	list_coder->coders[datas->i].is_dead = is_dead;
 	list_coder->coders[datas->i].is_done = 0;
 	list_coder->coders[datas->i].mutex_printf = datas->mutex_printf;
-	pthread_mutex_init(&list_coder->coders[datas->i].mutex_is_dead, NULL);
+	list_coder->coders[datas->i].mutex_is_dead = mutex_is_dead;
 	pthread_mutex_init(&list_coder->coders[datas->i].mutex_is_done, NULL);
 	pthread_mutex_init(&list_coder->coders[datas->i].mutex_last_compile_start,
 		NULL);
 }
 
+// Retourne la liste de coders avec tous les arguments
 t_list_coder	*get_coders(t_args args,
-	int *is_dead, pthread_mutex_t *mutex_printf)
+	int *is_dead, pthread_mutex_t *mutex_printf, pthread_mutex_t *mutex_is_dead)
 {
 	t_setup			data;
 	t_list_coder	*list_coder;
@@ -83,10 +85,30 @@ t_list_coder	*get_coders(t_args args,
 	}
 	while (data.i < list_coder->number_of_coders)
 	{
-		set_datas(list_coder, &data, is_dead);
+		set_datas(list_coder, &data, is_dead, mutex_is_dead);
 		data.i ++;
 	}
 	list_coder->is_dead = is_dead;
 	list_coder->start_time = data.start_time;
 	return (list_coder);
+}
+
+// Set coder et dongles
+int	get_coders_dongles(t_list_coder	**list_coder, t_args args, int *is_dead,
+						t_main *mutexes)
+{
+	*list_coder = get_coders(args, is_dead, &mutexes->mutex_printf,
+			&mutexes->mutex_is_dead);
+	if (*list_coder == NULL)
+	{
+		printf("%s\n", "Erreur lors de l'allocation de memoire");
+		return (0);
+	}
+	if (!set_dongles(*list_coder))
+	{
+		free_all(*list_coder);
+		printf("%s\n", "Erreur lors de l'allocation de memoire");
+		return (0);
+	}
+	return (1);
 }

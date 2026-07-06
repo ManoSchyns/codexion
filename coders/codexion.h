@@ -56,9 +56,9 @@ typedef struct s_coder
 	long			start_waiting;
 	int				*is_dead;
 	int				is_done;
-	pthread_mutex_t	mutex_is_dead;
 	pthread_mutex_t	mutex_is_done;
 	pthread_mutex_t	mutex_last_compile_start;
+	pthread_mutex_t	*mutex_is_dead;
 	pthread_mutex_t	*mutex_printf;
 	pthread_t		thread;
 	t_dongle		*left;
@@ -96,6 +96,12 @@ typedef struct s_setup
 	pthread_mutex_t	*mutex_printf;
 }	t_setup;
 
+typedef struct s_main
+{
+	pthread_mutex_t	mutex_printf;
+	pthread_mutex_t	mutex_is_dead;
+}	t_main;
+
 // parsing
 t_args			parse_args(int argc, char **argv);
 
@@ -112,11 +118,14 @@ struct timespec	get_timeout_ms(long delay_ms);
 
 // Fullfill structure
 t_list_coder	*get_coders(t_args args, int *is_dead,
-					pthread_mutex_t *mutex_printf);
+					pthread_mutex_t *mutex_printf,
+					pthread_mutex_t *mutex_is_dead);
 void			set_left_rigth(t_list_coder *list_coder);
 int				set_dongles(t_list_coder *list_coder);
 void			start_threads(t_list_coder *list_coder);
 void			join_threads(t_list_coder *list_coder);
+int				get_coders_dongles(t_list_coder	**list_coder,
+					t_args args, int *is_dead, t_main *mutexes);
 
 //utils
 void			free_all(t_list_coder *list_coder);
