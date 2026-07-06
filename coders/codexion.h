@@ -31,7 +31,6 @@ typedef struct s_heap	t_heap;
 typedef struct s_heap
 {
 	int		rank;
-	long	start_waiting;
 	long	deadline;
 	t_heap	*next;
 }	t_heap;
@@ -53,7 +52,6 @@ typedef struct s_coder
 	int				rank;
 	long			last_compile_start;
 	long			start_time;
-	long			start_waiting;
 	int				*is_dead;
 	int				is_done;
 	pthread_mutex_t	mutex_is_done;
@@ -109,7 +107,7 @@ t_args			parse_args(int argc, char **argv);
 int				dongle_is_available(t_coder *coder, t_dongle *dongle);
 int				check_is_dead(t_coder *coder);
 void			*coder(void *arg);
-void			taking_dongle(t_coder *coder, t_dongle *dongle);
+void			taking_dongle(t_dongle *dongle);
 void			waiting_dongle(t_coder *coder, t_dongle *dongle);
 void			set_dongle_available(t_coder *coder);
 void			show_message(t_coder *coder, char *message);
@@ -144,5 +142,6 @@ void			pop(t_heap **heap);
 int				is_in_waitinglist(t_coder *coder, t_heap *waiting_list);
 void			ft_fifo(t_coder *coder, t_dongle *dongle);
 void			push_back(t_coder *coder, t_heap **heap);
+void			edf(t_coder *coder, t_dongle *dongle);
 
 #endif

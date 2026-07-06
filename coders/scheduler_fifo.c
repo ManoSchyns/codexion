@@ -10,7 +10,6 @@ void	ft_fifo(t_coder *coder, t_dongle *dongle)
 }
 
 // Push dans la heap le coder
-// En fonction de son temps d'attente
 void	push_back(t_coder *coder, t_heap **heap)
 {
 	t_heap	*to_add;
@@ -20,16 +19,15 @@ void	push_back(t_coder *coder, t_heap **heap)
 	if (to_add == NULL)
 		return ;
 	to_add->rank = coder->rank;
-	to_add->start_waiting = coder->start_waiting;
 	to_add->next = NULL;
-	if (*heap == NULL || to_add->start_waiting < (*heap)->start_waiting)
+	if (*heap == NULL )
 	{
 		to_add->next = *heap;
 		*heap = to_add;
 		return ;
 	}
 	cur = *heap;
-	while (cur->next && cur->next->start_waiting <= to_add->start_waiting)
+	while (cur->next != NULL)
 		cur = cur->next;
 	to_add->next = cur->next;
 	cur->next = to_add;

@@ -19,7 +19,7 @@ int	dongle_is_available(t_coder *coder, t_dongle *dongle)
 
 // Prend un dongle
 // Le retire la waiting list
-void	taking_dongle(t_coder *coder, t_dongle *dongle)
+void	taking_dongle(t_dongle *dongle)
 {
 	dongle->available = 0;
 	pop(&dongle->waiting_list);
@@ -45,7 +45,7 @@ void	waiting_dongle(t_coder *coder, t_dongle *dongle)
 		pthread_cond_timedwait(&dongle->cond, &dongle->mutex, &ts);
 	}
 	if (!check_is_dead(coder))
-		taking_dongle(coder, dongle);
+		taking_dongle(dongle);
 	pthread_mutex_unlock(&dongle->mutex);
 }
 
@@ -71,19 +71,23 @@ void	set_dongle_available(t_coder *coder)
 // Essaies de prendre 2 dongles
 void	getting_dongles(t_coder *coder)
 {
-	coder->start_waiting = get_time_ms();
 	if ((coder->rank == 1 || coder->args.number_of_coders
-			== coder->rank) && coder->rank != 2)
+			== coder->rank) && coder->rank != 2
+			&& !check_is_dead(coder))
 	{
 		waiting_dongle(coder, coder->left);
+		if (check_is_dead(coder))
+			return ;
 		waiting_dongle(coder, coder->right);
 	}
-	else
+	else if (!check_is_dead(coder))
 	{
 		waiting_dongle(coder, coder->right);
+		if (check_is_dead(coder))
+			return ;
 		waiting_dongle(coder, coder->left);
 	}
-	if (!*coder->is_dead)
+	if (!check_is_dead(coder))
 	{
 		show_message(coder, "has taken a dongle");
 		show_message(coder, "has taken a dongle");
