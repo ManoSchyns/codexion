@@ -22,8 +22,7 @@ Avalable = 1
 Et Si
 temps mtnt - temps last use > temps de recharge
 */
-
-void print_hep(t_heap *heap)
+void	print_hep(t_heap *heap)
 {
 	printf("========= MA HEAP ==========\n");
 	while (heap != NULL)
@@ -38,7 +37,7 @@ void print_hep(t_heap *heap)
 // 0 si non
 int	is_in_waitinglist(t_coder *coder, t_heap *waiting_list)
 {
-	while(waiting_list != NULL)
+	while (waiting_list != NULL)
 	{
 		if (coder->rank == waiting_list->rank)
 			return (1);
@@ -49,7 +48,7 @@ int	is_in_waitinglist(t_coder *coder, t_heap *waiting_list)
 
 void	pop(t_heap **heap)
 {
-	t_heap *to_remove;
+	t_heap	*to_remove;
 
 	if (*heap == NULL)
 		return ;
@@ -67,7 +66,7 @@ void	edf()
 // si il est pas déjà dessus
 void	scheduler(t_coder *coder, t_dongle *dongle)
 {	
-	if (strcmp(coder->args.scheduler,"fifo") == 0)
+	if (strcmp (coder->args.scheduler,"fifo") == 0)
 		ft_fifo(coder, dongle);
 	else if (strcmp(coder->args.scheduler,"edf") == 0)
 	{

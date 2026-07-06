@@ -1,8 +1,8 @@
 #include "codexion.h"
 
-void broadcast_all(t_list_coder *list_coders)
+void	broadcast_all(t_list_coder *list_coders)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (i < list_coders->number_of_coders)
@@ -27,6 +27,18 @@ void	analyse_one_coder(t_monitor *datas)
 	}
 }
 
+void	monitor_utils(t_monitor *datas)
+{
+	datas->coder = &datas->list_coder->coders[datas->i];
+	get_safe_is_done(datas);
+	if (datas->is_done == 0)
+	{
+		analyse_one_coder(datas);
+	}
+	else
+		datas->count_done ++;
+}
+
 void	*monitor(void *args)
 {
 	t_monitor	datas;
@@ -43,14 +55,7 @@ void	*monitor(void *args)
 		while (datas.i < datas.list_coder->number_of_coders
 			&& datas.is_dead == 0)
 		{
-			datas.coder = &datas.list_coder->coders[datas.i];
-			get_safe_is_done(&datas);
-			if (datas.is_done == 0)
-			{
-				analyse_one_coder(&datas);
-			}
-			else
-				datas.count_done ++;
+			monitor_utils(&datas);
 			datas.i ++;
 		}
 	}

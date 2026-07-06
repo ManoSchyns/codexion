@@ -26,8 +26,8 @@ typedef struct s_args
 
 }	t_args;
 
-typedef struct s_heap t_heap;
-//
+// Structure de mes heap
+typedef struct s_heap	t_heap;
 typedef struct s_heap
 {
 	int		rank;
@@ -100,7 +100,15 @@ typedef struct s_setup
 t_args			parse_args(int argc, char **argv);
 
 // coder thread
+int				dongle_is_available(t_coder *coder, t_dongle *dongle);
+int				check_is_dead(t_coder *coder);
 void			*coder(void *arg);
+void			taking_dongle(t_coder *coder, t_dongle *dongle);
+void			waiting_dongle(t_coder *coder, t_dongle *dongle);
+void			set_dongle_available(t_coder *coder);
+void			show_message(t_coder *coder, char *message);
+void			getting_dongles(t_coder *coder);
+struct timespec	get_timeout_ms(long delay_ms);
 
 // Fullfill structure
 t_list_coder	*get_coders(t_args args, int *is_dead,

@@ -8,29 +8,26 @@ void	ft_fifo(t_coder *coder, t_dongle *dongle)
 	pthread_cond_broadcast(&dongle->cond);
 }
 
-void push_back(t_coder *coder, t_heap **heap)
+void	push_back(t_coder *coder, t_heap **heap)
 {
-    t_heap *to_add = malloc(sizeof(t_heap));
-    t_heap *cur;
+	t_heap	*to_add;
+	t_heap	*cur;
 
-    if (!to_add)
-        return;
-
-    to_add->rank = coder->rank;
-    to_add->start_waiting = coder->start_waiting;
-    to_add->next = NULL;
-
-    if (*heap == NULL || to_add->start_waiting < (*heap)->start_waiting)
-    {
-        to_add->next = *heap;
-        *heap = to_add;
-        return;
-    }
-
-    cur = *heap;
-    while (cur->next && cur->next->start_waiting <= to_add->start_waiting)
-        cur = cur->next;
-
-    to_add->next = cur->next;
-    cur->next = to_add;
+	to_add = malloc(sizeof(t_heap));
+	if (to_add == NULL)
+		return ;
+	to_add->rank = coder->rank;
+	to_add->start_waiting = coder->start_waiting;
+	to_add->next = NULL;
+	if (*heap == NULL || to_add->start_waiting < (*heap)->start_waiting)
+	{
+		to_add->next = *heap;
+		*heap = to_add;
+		return ;
+	}
+	cur = *heap;
+	while (cur->next && cur->next->start_waiting <= to_add->start_waiting)
+		cur = cur->next;
+	to_add->next = cur->next;
+	cur->next = to_add;
 }

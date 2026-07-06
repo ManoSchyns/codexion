@@ -1,23 +1,24 @@
 #include "codexion.h"
 
-struct timespec get_timeout_ms(long delay_ms)
+// Return le temps actuel + un delay
+struct timespec	get_timeout_ms(long delay_ms)
 {
-    struct timeval tv;
-    struct timespec ts;
+	struct timeval	tv;
+	struct timespec	ts;
 
-    gettimeofday(&tv, NULL);
-    ts.tv_sec = tv.tv_sec;
-    ts.tv_nsec = tv.tv_usec * 1000;
-    ts.tv_nsec += delay_ms * 1000000;
-    if (ts.tv_nsec >= 1000000000)
-    {
-        ts.tv_sec += ts.tv_nsec / 1000000000;
-        ts.tv_nsec %= 1000000000;
-    }
-
-    return ts;
+	gettimeofday(&tv, NULL);
+	ts.tv_sec = tv.tv_sec;
+	ts.tv_nsec = tv.tv_usec * 1000;
+	ts.tv_nsec += delay_ms * 1000000;
+	if (ts.tv_nsec >= 1000000000)
+	{
+		ts.tv_sec += ts.tv_nsec / 1000000000;
+		ts.tv_nsec %= 1000000000;
+	}
+	return (ts);
 }
 
+// affiche un message de manière sécurisée
 void	show_message(t_coder *coder, char *message)
 {
 	pthread_mutex_lock(coder->mutex_printf);
@@ -26,6 +27,7 @@ void	show_message(t_coder *coder, char *message)
 	pthread_mutex_unlock(coder->mutex_printf);
 }
 
+// Verifie de maniere sécurisée si coder dead
 int	check_is_dead(t_coder *coder)
 {
 	int	is_dead;
@@ -37,68 +39,6 @@ int	check_is_dead(t_coder *coder)
 	if (is_dead)
 		return (1);
 	return (0);
-}
-
-// Return 1 si le dongle est prenable
-// Return 0 si non
-int		dongle_is_available(t_coder *coder, t_dongle *dongle)
-{
-	long	now;
-	long	dongle_cooldown;
-
-	now = get_time_ms();
-	dongle_cooldown = coder->args.dongle_cooldown;
-	if (dongle->waiting_list == NULL)
-		return (0);
-	if (dongle->available && now - dongle->last_release >= dongle_cooldown
-		&& dongle->waiting_list->rank == coder->rank)
-		return (1);
-	return (0);
-}
-
-void	taking_dongle(t_coder *coder, t_dongle *dongle)
-{
-	dongle->available = 0;
-	pop(&dongle->waiting_list);
-}
-
-void waiting_dongle(t_coder *coder, t_dongle *dongle)
-{
-	struct timespec ts;
-	long		delay;
-
-	pthread_mutex_lock(&dongle->mutex);
-	scheduler(coder, dongle);
-	while (!dongle_is_available(coder, dongle) && !check_is_dead(coder))
-	{
-		delay = dongle->last_release + coder->args.dongle_cooldown - get_time_ms();
-		if (delay < 0)
-			delay = 0;
-		ts = get_timeout_ms(delay);
-		pthread_cond_timedwait(&dongle->cond, &dongle->mutex, &ts);
-	}
-
-	if (!check_is_dead(coder))
-		taking_dongle(coder, dongle);
-
-	pthread_mutex_unlock(&dongle->mutex);
-}
-
-void set_dongle_available(t_coder *coder)
-{
-	long	time;
-
-	time = get_time_ms();
-	pthread_mutex_lock(&coder->right->mutex);
-	coder->right->available = 1;
-	coder->right->last_release = time;
-	pthread_cond_broadcast(&coder->right->cond);
-	pthread_mutex_unlock(&coder->right->mutex);
-	pthread_mutex_lock(&coder->left->mutex);
-	coder->left->available = 1;
-	coder->left->last_release = time;
-	pthread_cond_broadcast(&coder->left->cond);
-	pthread_mutex_unlock(&coder->left->mutex);
 }
 
 // Return 1 si la routine s'est bien passéé
@@ -125,6 +65,9 @@ int	routine(t_coder *coder, int *compilation_count)
 	return (1);
 }
 
+// Thread d'un coder.
+// Compile, debug et refactor n fois.
+// Necessite des dongles pour compiler
 void	*coder(void *args)
 {
 	t_coder	*coder;
@@ -142,34 +85,9 @@ void	*coder(void *args)
 			pthread_mutex_unlock(&coder->mutex_is_done);
 			return (NULL);
 		}
-		//ask 2 dongle
-
-		//demander le -1 si disponible et si c'est a nottre tour
-		// Take 2 dongles
-		// On se fait POP
-		//si 2 dongle -> Start compiling
-		// compile
-		// Quand on commence a compiler on met le dernier temps de compilation effectué
-
-		coder->start_waiting = get_time_ms();
-		if (coder->rank == 1 || coder->args.number_of_coders == coder->rank)
-		{
-			waiting_dongle(coder, coder->left);
-			waiting_dongle(coder, coder->right);
-		}
-		else
-		{
-			waiting_dongle(coder, coder->right);
-			waiting_dongle(coder, coder->left);
-		}
-		if (!*coder->is_dead)
-		{
-			show_message(coder, "has taken a dongle");
-			show_message(coder, "has taken a dongle");
-		}
+		getting_dongles(coder);
 		if (!routine(coder, &compilation_count))
 			return (NULL);
-
 	}
 	return (NULL);
 }
