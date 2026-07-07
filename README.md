@@ -174,3 +174,8 @@ take(dongle)
 compile()
 
 pthread_cond_broadcast(&cond)
+
+## Resume
+So each shared ressources (dongles, logging, monitor state) are protected by a mutex.
+
+And synchronization is managed by pthread_cond_t, pthread_cond_broadcast and pthread_cond_wait or pthread_cond_timedwait
