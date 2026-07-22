@@ -71,6 +71,8 @@ Multithreading with POSIX : https://franckh.developpez.com/tutoriels/posix/pthre
 
 More informations : https://www.codequoi.com/threads-mutex-et-programmation-concurrente-en-c/
 
+AI USE: Help to review the basics of c
+
 # Additionnal Section
 
 ## Blocking cases handled
@@ -96,3 +98,84 @@ The problem was that my monitoring system perfectly detected burnout, but I need
 To achieve this, a shared variable protected by a mutex is used. Before performing any action, the coder checks whether or not they are in a state of burnout.
 
 ## Thread synchronization mechanisms
+
+To avoid race conditions in this project and ensure that resources have reliable, up-to-date data, the following were used:
+
+	pthread_mutex_t
+and
+	pthread_cond_t,
+
+1) pthread_mutex_t
+Used to protect data via `pthread_mutex_lock` and `pthread_mutex_unlock`.
+
+Any sensitive data—meaning data that could be accessed by multiple threads simultaneously—was protected by mutexes in this project to prevent race conditions.
+
+`pthread_mutex_lock` was called whenever the data was accessed, ensuring safe usage.
+
+`pthread_mutex_lock` -> "If the data isn't currently in use by someone else, I will use it. I am starting to use it."
+
+`pthread_mutex_unlock` -> "From this point on, I no longer need the data. If another thread wants to use it, they can. I am done with it."
+
+For Log serialization too
+
+Every message printed by the program is protected by mutex_printf. This guarantees that only one thread writes to stdout at a time, preventing interleaved or corrupted out
+
+Example:
+
+	To check if a thread has "burned out" (terminated), I created a variable called `is_dead` that is accessible to all threads.
+
+	This variable is associated with a mutex (`mutex_is_dead`).
+
+	Every time `is_dead` is accessed, I lock the mutex, use the variable, and finally unlock it.
+
+2) pthread_cond_t
+
+Used to synchronize the dongles.
+
+Each dongle has its own `pthread_cond_t`.
+
+`pthread_cond_t` allows a thread to sleep while waiting for a specific event to occur.
+
+It is commonly used with: `pthread_cond_wait`
+
+And `pthread_cond_broadcast`.
+
+`pthread_cond_wait`
+
+	-> Waits until a signal is received on the condition variable; the program sleeps.
+
+`pthread_cond_broadcast`
+
+	-> Signals the condition variable.
+
+When `cond_wait` receives the signal, the thread wakes up and program execution resumes.
+
+I used this mechanism for my dongles. As long as it is not the encoder's turn to take the dongle, it waits for the dongle to be released.
+
+As soon as the dongle is released, the process releasing it broadcasts a signal. All encoders waiting for the resource wake up and check if it is their turn.
+
+If so, they take it.
+
+If not, they go back to waiting.
+
+Example:
+------------------
+Wait
+
+while (!my_turn())
+
+pthread_cond_wait(&cond, &mutex)
+
+----------------
+Release
+
+take(dongle)
+
+compile()
+
+pthread_cond_broadcast(&cond)
+
+## Resume
+So each shared ressources (dongles, logging, monitor state) are protected by a mutex.
+
+And synchronization is managed by pthread_cond_t, pthread_cond_broadcast and pthread_cond_wait or pthread_cond_timedwait
