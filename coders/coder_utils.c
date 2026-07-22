@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   coder_utils.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mschyns <mano.schyns@learner.42.tech>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/22 13:29:57 by mschyns           #+#    #+#             */
+/*   Updated: 2026/07/22 13:32:09 by mschyns          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "codexion.h"
 
 // Return 1 si le dongle est prenable
@@ -73,7 +85,7 @@ void	getting_dongles(t_coder *coder)
 {
 	if ((coder->rank == 1 || coder->args.number_of_coders
 			== coder->rank) && coder->rank != 2
-			&& !check_is_dead(coder))
+		&& !check_is_dead(coder))
 	{
 		waiting_dongle(coder, coder->left);
 		if (check_is_dead(coder))
